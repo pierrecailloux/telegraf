@@ -1,4 +1,4 @@
-module "github.com/pierrecailloux/telegraf/plugins/inputs/conso"
+module github.com/influxdata/telegraf
 
 go 1.18
 

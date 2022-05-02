@@ -7,7 +7,7 @@ import (
 	"time"
 
 	// TODO: import your plugins
-	_ "github.com/pierrecailloux/telegraf/tree/master/plugins/inputs/conso"
+	_ "github.com/pierrecailloux/telegraf/plugins/inputs/conso"
 
 	"github.com/influxdata/telegraf/plugins/common/shim"
 )
@@ -28,7 +28,7 @@ var err error
 //
 // shim := shim.New()
 //
-// shim.AddInput(myInput)
+// shim.AddInput(myInput) 
 //
 // // now the shim.Run() call as below. Note the shim is only intended to run a single plugin.
 //
