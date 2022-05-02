@@ -1,8 +1,11 @@
 package conso
 
-import "fmt"
+import (
+	"fmt"
+	"testing"
+)
 
-func TestConso(c *Conso) {
+func TestConso(t *testing.T) {
 
 	fmt.Println("ok")
 }
