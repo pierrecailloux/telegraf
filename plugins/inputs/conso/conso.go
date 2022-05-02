@@ -35,7 +35,7 @@ func (s *Conso) Init() error {
 }
 
 func (s *Conso) Gather(acc telegraf.Accumulator) error {
-
+	fmt.Println("host = ", s.host)
 	exec.Command("  sudo powertop -C  /tmp/powertop.csv")
 	csvFile, err := os.Open("/tmp/powertop.csv")
 	if err != nil {
