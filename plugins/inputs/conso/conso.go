@@ -29,10 +29,6 @@ func (c *Conso) Description() string {
 	return "check watt using powertop "
 }
 
-func (c *Conso) SampleConfig() string {
-	return sampleConfig
-}
-
 // Init is for setup, and validating config.
 func (s *Conso) Init() error {
 	return nil

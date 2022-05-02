@@ -1,6 +1,8 @@
-package conso 
+package conso
 
-funct TestConso (
-print "ok"
+import "fmt"
 
-)
+func TestConso(c *Conso) {
+
+	fmt.Println("ok")
+}
