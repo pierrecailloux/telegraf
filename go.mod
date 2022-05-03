@@ -1,4 +1,4 @@
-module "github.com/pierrecailloux/telegraf/plugins/inputs/conso"
+module github.com/pierrecailloux/telegraf
 
 go 1.18
 
@@ -256,6 +256,7 @@ require (
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/serf v0.9.6 // indirect
+	github.com/influxdata/telegraf v1.22.3 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.11.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect

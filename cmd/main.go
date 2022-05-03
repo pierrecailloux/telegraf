@@ -28,7 +28,7 @@ var err error
 //
 // shim := shim.New()
 //
-// shim.AddInput(myInput) 
+// shim.AddInput(myInput)
 //
 // // now the shim.Run() call as below. Note the shim is only intended to run a single plugin.
 //

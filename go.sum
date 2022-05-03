@@ -1324,6 +1324,8 @@ github.com/influxdata/roaring v0.4.13-0.20180809181101-fc520f41fab6/go.mod h1:bS
 github.com/influxdata/tail v1.0.1-0.20210707231403-b283181d1fa7 h1:0rQOs1VHLVFpAAOIR0mJEvVOIaMYFgYdreeVbgI9sII=
 github.com/influxdata/tail v1.0.1-0.20210707231403-b283181d1fa7/go.mod h1:VeiWgI3qaGdJWust2fP27a6J+koITo/1c/UhxeOxgaM=
 github.com/influxdata/tdigest v0.0.0-20181121200506-bf2b5ad3c0a9/go.mod h1:Js0mqiSBE6Ffsg94weZZ2c+v/ciT8QRHFOap7EKDrR0=
+github.com/influxdata/telegraf v1.22.3 h1:2RiUMCJWXSE5UENwPTuhen4ZUovFpFFdaT5hLHdY7Ms=
+github.com/influxdata/telegraf v1.22.3/go.mod h1:44GEp0cI5irU72TtSxqfnbyHhlBDBRc+WoO0wS15bq8=
 github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65 h1:vvyMtD5LTJc1W9sQKjDkAWdcg0478CszSdzlHtiAXCY=
 github.com/influxdata/toml v0.0.0-20190415235208-270119a8ce65/go.mod h1:zApaNFpP/bTpQItGZNNUMISDMDAnTXu9UqJ4yT3ocz8=
 github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368/go.mod h1:Wbbw6tYNvwa5dlB6304Sd+82Z3f7PmVZHVKU637d4po=

@@ -16,12 +16,8 @@ import (
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
 
-const sampleConfig = `
-host = "localhost"
-`
-
 type Conso struct {
-	host string `toml:"host"`
+	Host string `toml:"host"`
 	// conso float64 `toml:"conso"`
 }
 
@@ -35,8 +31,8 @@ func (s *Conso) Init() error {
 }
 
 func (s *Conso) Gather(acc telegraf.Accumulator) error {
-	fmt.Println("host = ", s.host)
-	exec.Command("  sudo powertop -C  /tmp/powertop.csv")
+	fmt.Println("host = ", s.Host)
+	exec.Command("  sudo powertop -C  /tmp/powertop.csv").Output()
 	csvFile, err := os.Open("/tmp/powertop.csv")
 	if err != nil {
 		fmt.Println(err)
@@ -49,34 +45,34 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 	}
 
 	for _, line := range csvLines {
-		what := ""
 		if strings.Contains(line[0], "The system baseline power is estimated at") {
 			what := strings.Split(line[0], ":")[1]
 			_ = what
+
+			newvalue := strings.Replace(what, ";", "", -1)
+			re := regexp.MustCompile("[0-9]+")
+			number, _ := strconv.ParseFloat(re.FindAllString(newvalue, -1)[0], 64)
+			numberstring, _ := re.FindAllString(newvalue, -1)[0], 64
+			unit := (strings.Replace(newvalue, " ", "", -1)[len(numberstring) : len(newvalue)-len(numberstring)-1])
+			fmt.Println("unit =", unit)
+			var convertedvalue float64
+			convertedvalue = -1
+			switch unit {
+			case "mW":
+				convertedvalue = number / 1000
+			case "µW":
+				convertedvalue = number / 1000000
+			case "W":
+				convertedvalue = convertedvalue * 1
+			default:
+				log.Fatal("conversion failed  unit is ", unit)
+			}
+
+			fields := make(map[string]interface{})
+			fields[s.Host] = convertedvalue
+			acc.AddFields("conso", fields, nil)
 			break
 		}
-		newvalue := strings.Replace(what, ";", "", -1)
-		re := regexp.MustCompile("[0-9]+")
-		number, _ := strconv.ParseFloat(re.FindAllString(newvalue, -1)[0], 64)
-		numberstring, _ := re.FindAllString(newvalue, -1)[0], 64
-		unit := (strings.Replace(newvalue, " ", "", -1)[len(numberstring) : len(newvalue)-len(numberstring)-1])
-		fmt.Println("unit =", unit)
-		var convertedvalue float64
-		convertedvalue = -1
-		switch unit {
-		case "mW":
-			convertedvalue = number / 1000
-		case "µW":
-			convertedvalue = number / 1000000
-		case "W":
-			convertedvalue = convertedvalue * 1
-		default:
-			log.Fatal("conversion failed  unit is ", unit)
-		}
-
-		var fields map[string]interface{}
-		fields[s.host] = convertedvalue
-		acc.AddFields("conso", fields, nil)
 	}
 
 	return nil
