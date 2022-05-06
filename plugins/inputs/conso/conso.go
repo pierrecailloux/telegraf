@@ -3,10 +3,6 @@
 package conso
 
 import (
-	"encoding/csv"
-	"fmt"
-	"log"
-	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -17,8 +13,8 @@ import (
 )
 
 type Conso struct {
-	Host string `toml:"host"`
-	// conso float64 `toml:"conso"`
+	Host string          `toml:"host"`
+	Log  telegraf.Logger `toml:"-"`
 }
 
 func (c *Conso) Description() string {
@@ -31,49 +27,49 @@ func (s *Conso) Init() error {
 }
 
 func (s *Conso) Gather(acc telegraf.Accumulator) error {
-	fmt.Println("host = ", s.Host)
-	exec.Command("  sudo powertop -C  /tmp/powertop.csv").Output()
-	csvFile, err := os.Open("/tmp/powertop.csv")
+
+	_, err := exec.Command("powertop", "-C").Output()
 	if err != nil {
-		fmt.Println(err)
+		s.Log.Errorf("error executing powertop ", err)
 	}
-	defer csvFile.Close()
 
-	csvLines, err := csv.NewReader(csvFile).ReadAll()
+	output, err := exec.Command("grep", "baseline", "powertop.csv").Output()
+	outputstr := string(output)
 	if err != nil {
-		fmt.Println(err)
+		s.Log.Errorf("error greppring csv ", err)
 	}
 
-	for _, line := range csvLines {
-		if strings.Contains(line[0], "The system baseline power is estimated at") {
-			what := strings.Split(line[0], ":")[1]
-			_ = what
-
-			newvalue := strings.Replace(what, ";", "", -1)
-			re := regexp.MustCompile("[0-9]+")
-			number, _ := strconv.ParseFloat(re.FindAllString(newvalue, -1)[0], 64)
-			numberstring, _ := re.FindAllString(newvalue, -1)[0], 64
-			unit := (strings.Replace(newvalue, " ", "", -1)[len(numberstring) : len(newvalue)-len(numberstring)-1])
-			fmt.Println("unit =", unit)
-			var convertedvalue float64
-			convertedvalue = -1
-			switch unit {
-			case "mW":
-				convertedvalue = number / 1000
-			case "µW":
-				convertedvalue = number / 1000000
-			case "W":
-				convertedvalue = convertedvalue * 1
-			default:
-				log.Fatal("conversion failed  unit is ", unit)
-			}
-
-			fields := make(map[string]interface{})
-			fields[s.Host] = convertedvalue
-			acc.AddFields("conso", fields, nil)
-			break
-		}
+	what := strings.Split(outputstr, ":")[1]
+	newvalue := strings.Replace(what, ";", "", -1)
+	newvalue = strings.Replace(newvalue, " ", "", -1)
+	newvalue = strings.Replace(newvalue, `\n`, "", -1)
+	regexUnit := regexp.MustCompile("[a-zA-Z]")
+	unittable := regexUnit.FindAllString(newvalue, -1)
+	unit := ""
+	for i := 0; i < len(unittable); i++ {
+		unit += unittable[i]
 	}
+	number, err := strconv.ParseFloat(newvalue[0:len(newvalue)-len(unit)-1], 64)
+	if err != nil {
+		s.Log.Errorf(" error casting number  csv %v ", err)
+
+	}
+	var convertedvalue float64
+	convertedvalue = -1
+	switch unit {
+	case "mW":
+		convertedvalue = number / 1000
+	case "µW":
+		convertedvalue = number / 1000000
+	case "W":
+		convertedvalue = number
+	default:
+		s.Log.Errorf("conversion failed  unit is %v ", unit)
+	}
+
+	fields := make(map[string]interface{})
+	fields[s.Host] = convertedvalue
+	acc.AddFields("conso", fields, nil)
 
 	return nil
 
