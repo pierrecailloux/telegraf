@@ -27,16 +27,19 @@ func (s *Conso) Init() error {
 }
 
 func (s *Conso) Gather(acc telegraf.Accumulator) error {
-
+	var errortoreturn error
+	errortoreturn = nil
 	_, err := exec.Command("powertop", "-C").Output()
 	if err != nil {
 		s.Log.Errorf("error executing powertop ", err)
+		errortoreturn = err
 	}
 
 	output, err := exec.Command("grep", "baseline", "powertop.csv").Output()
 	outputstr := string(output)
 	if err != nil {
 		s.Log.Errorf("error greppring csv ", err)
+		errortoreturn = err
 	}
 
 	what := strings.Split(outputstr, ":")[1]
@@ -52,6 +55,7 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 	number, err := strconv.ParseFloat(newvalue[0:len(newvalue)-len(unit)-1], 64)
 	if err != nil {
 		s.Log.Errorf(" error casting number  csv %v ", err)
+		errortoreturn = err
 
 	}
 	var convertedvalue float64
@@ -65,13 +69,14 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 		convertedvalue = number
 	default:
 		s.Log.Errorf("conversion failed  unit is %v ", unit)
+		errortoreturn = err
 	}
 
 	fields := make(map[string]interface{})
 	fields[s.Host] = convertedvalue
 	acc.AddFields("conso", fields, nil)
 
-	return nil
+	return errortoreturn
 
 }
 
