@@ -3,18 +3,22 @@
 package conso
 
 import (
-	"os/exec"
+	"encoding/base64"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
+	"golang.org/x/crypto/ssh"
 )
 
 type Conso struct {
-	Host string          `toml:"host"`
-	Log  telegraf.Logger `toml:"-"`
+	Host     string          `toml:"host"`
+	Port     string          `toml:"port"`
+	Log      telegraf.Logger `toml:"-"`
+	User     string          `toml:"user"`
+	Password string          `toml:"password"`
 }
 
 func (c *Conso) Description() string {
@@ -27,20 +31,29 @@ func (s *Conso) Init() error {
 }
 
 func (s *Conso) Gather(acc telegraf.Accumulator) error {
-	var errortoreturn error
-	errortoreturn = nil
-	_, err := exec.Command("powertop", "-C").Output()
+	password, err := base64.StdEncoding.DecodeString(s.Password)
 	if err != nil {
-		s.Log.Errorf("error executing powertop ", err)
-		errortoreturn = err
+		s.Log.Errorf("decoding password ", err)
+		return err
 	}
 
-	output, err := exec.Command("grep", "baseline", "powertop.csv").Output()
-	outputstr := string(output)
+	client, session, err := connectToHost(s.User, s.Host+":"+s.Port, string(password))
+	if err != nil {
+		s.Log.Errorf("error connecting to  host  "+s.Host, err)
+		return err
+	}
+	defer client.Close()
+	err = session.Run(`powertop -C `)
+	if err != nil {
+		s.Log.Errorf("error executing powertop ", err)
+		return err
+	}
+	out, err := session.CombinedOutput(`grep  baseline "powertop.csv" `)
 	if err != nil {
 		s.Log.Errorf("error greppring csv ", err)
-		errortoreturn = err
+		return err
 	}
+	outputstr := string(out)
 
 	what := strings.Split(outputstr, ":")[1]
 	newvalue := strings.Replace(what, ";", "", -1)
@@ -55,7 +68,7 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 	number, err := strconv.ParseFloat(newvalue[0:len(newvalue)-len(unit)-1], 64)
 	if err != nil {
 		s.Log.Errorf(" error casting number  csv %v ", err)
-		errortoreturn = err
+		return err
 
 	}
 	var convertedvalue float64
@@ -69,17 +82,40 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 		convertedvalue = number
 	default:
 		s.Log.Errorf("conversion failed  unit is %v ", unit)
-		errortoreturn = err
+		return err
 	}
 
 	fields := make(map[string]interface{})
-	fields[s.Host] = convertedvalue
-	acc.AddFields("conso", fields, nil)
-
-	return errortoreturn
+	fields["OverAll"] = convertedvalue
+	tags := make(map[string]string)
+	tags["ProbedHost"] = s.Host
+	acc.AddFields("conso", fields, tags)
+	return nil
 
 }
 
 func init() {
 	inputs.Add("conso", func() telegraf.Input { return &Conso{} })
+}
+
+func connectToHost(user, host, pass string) (*ssh.Client, *ssh.Session, error) {
+
+	sshConfig := &ssh.ClientConfig{
+		User: user,
+		Auth: []ssh.AuthMethod{ssh.Password(pass)},
+	}
+	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+
+	client, err := ssh.Dial("tcp", host, sshConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	session, err := client.NewSession()
+	if err != nil {
+		client.Close()
+		return nil, nil, err
+	}
+
+	return client, session, nil
 }
