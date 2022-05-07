@@ -43,13 +43,7 @@ func (s *Conso) Gather(acc telegraf.Accumulator) error {
 		return err
 	}
 	defer client.Close()
-	session2 := session
-	err = session.Run(`powertop -C `)
-	if err != nil {
-		s.Log.Errorf("error executing powertop ", err)
-		return err
-	}
-	out, err := session2.CombinedOutput(`grep  baseline "powertop.csv" `)
+	out, err := session.CombinedOutput(`powertop -C ; grep  baseline "powertop.csv" `)
 	if err != nil {
 		s.Log.Errorf("error greppring csv ", err)
 		return err
