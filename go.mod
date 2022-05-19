@@ -1,4 +1,4 @@
-module github.com/pierrecailloux/telegra
+module github.com/pierrecailloux/telegraf
 
 go 1.18
 
